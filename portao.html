@@ -89,27 +89,38 @@
             return R * c; 
         }
 
-        // Exibe o status final na tela e inicia o cronômetro para fechar a aba
+        // Exibe o status final na tela e gerencia o fechamento
         function atualizarPainel(titulo, descricao, corHex, segundosParaFechar) {
             document.getElementById('status-title').innerText = titulo;
             document.getElementById('status-title').style.color = corHex;
             document.getElementById('status-details').innerText = descricao;
             
-            // Mostra o botão físico de fechar
+            // Mostra o botão físico de fechar (caso o window.close() automático seja bloqueado)
             const btn = document.getElementById('btn-close');
             btn.style.display = 'block';
             btn.style.backgroundColor = corHex;
 
-            let tempoRestante = segundosParaFechar;
             const timerElement = document.getElementById('timer');
-            timerElement.innerText = `Você pode fechar esta aba no botão acima.`;
 
-            // Mantém a tentativa de fechar em segundo plano
+            // Se for sucesso (sem delay)
+            if (segundosParaFechar === 0) {
+                timerElement.innerText = "Fechando aba...";
+                window.close();
+                return;
+            }
+
+            // Se for negado/erro (com contagem regressiva de 3s)
+            let tempoRestante = segundosParaFechar;
+            timerElement.innerText = `Fechando aba em ${tempoRestante}s...`;
+
             const contagemRegressiva = setInterval(() => {
                 tempoRestante--;
                 if (tempoRestante <= 0) {
                     clearInterval(contagemRegressiva);
+                    timerElement.innerText = "Você pode fechar esta aba no botão acima.";
                     window.close();
+                } else {
+                    timerElement.innerText = `Fechando aba em ${tempoRestante}s...`;
                 }
             }, 1000);
         }
@@ -120,7 +131,7 @@
                     "Sistema Incompatível", 
                     "Este navegador de internet não possui suporte para serviços de localização.", 
                     "#d9534f", 
-                    8
+                    3
                 );
                 return;
             }
@@ -138,42 +149,54 @@
                     const distancia = calcularDistancia(userLat, userLon, targetLat, targetLon).toFixed(1);
 
                     if (distancia <= DISTANCIA_MAX_METROS) {
-                        // Se estiver perto, dispara a API
+                        // 1. Identifica quem está abrindo a partir dos parâmetros da URL
+                        const urlParams = new URLSearchParams(window.location.search);
+                        const usuario = urlParams.get('user') || 'desconhecido';
+
+                        // Atualiza o painel para fechar na hora (0 segundos de delay)
                         atualizarPainel(
                             "Acesso Liberado!", 
-                            `Você está a ${distancia} metros do portão. Ativando comando de abertura...`, 
+                            `Olá, ${usuario}! Comando enviado.`, 
                             "#2b9348", 
-                            4
+                            0
                         );
 
-                        const endpoint = atob(configId);
+                        // 2. Monta o endpoint e dispara
+                        let endpoint = atob(configId);
+                        if (endpoint.includes('?')) {
+                            endpoint += `&p1=${encodeURIComponent(usuario)}`;
+                        } else {
+                            endpoint += `?p1=${encodeURIComponent(usuario)}`;
+                        }
+
                         fetch(endpoint, { mode: 'no-cors' })
-                            .catch(error => console.error('Erro de requisição:', error));
+                            .then(() => { window.close(); })
+                            .catch(() => { window.close(); });
                     } else {
-                        // Se estiver longe, bloqueia e exibe a distância calculada
+                        // Se estiver longe, bloqueia e exibe contagem de 3s
                         atualizarPainel(
                             "Acesso Negado", 
-                            `Você está fora da área permitida.\nSua distância atual: ${distancia}m.\nLimite máximo: ${DISTANCIA_MAX_METROS}m.`, 
+                            `Distância atual: ${distancia}m. Limite: ${DISTANCIA_MAX_METROS}m.`, 
                             "#d9534f", 
-                            10
+                            3
                         );
                     }
                 },
                 (error) => {
                     let motivo = "Não foi possível obter sua localização.";
                     if (error.code === error.PERMISSION_DENIED) {
-                        motivo = "A permissão de localização foi negada por você ou pelo sistema operacional.";
+                        motivo = "A permissão de localização foi negada.";
                     } else if (error.code === error.POSITION_UNAVAILABLE) {
-                        motivo = "O GPS do seu celular não conseguiu obter um sinal válido no momento.";
+                        motivo = "Sinal de GPS indisponível.";
                     } else if (error.code === error.TIMEOUT) {
-                        motivo = "O tempo limite para obter a localização do GPS expirou.";
+                        motivo = "Tempo limite do GPS excedido.";
                     }
 
                     atualizarPainel(
                         "Falha de GPS", 
-                        `${motivo} Garanta que o serviço de localização esteja ativo no seu aparelho.`, 
+                        motivo, 
                         "#e07a5f", 
-                        10
+                        3
                     );
                 },
                 { enableHighAccuracy: true, timeout: 6000, maximumAge: 0 }
@@ -184,7 +207,7 @@
 <body onload="validarEAbrir()">
     <div class="card">
         <div id="status-title" class="status" style="color: #0275d8;">Verificando...</div>
-        <div id="status-details" class="detalhes">Solicitando suas coordenadas físicas ao sensor de GPS...</div>
+        <div id="status-details" class="detalhes">Solicitando coordenadas ao GPS...</div>
         
         <button id="btn-close" class="btn-fechar" onclick="window.close()">Fechar Aba</button>
         
