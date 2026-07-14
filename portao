@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Abrindo portão...</title>
+    <script>
+        function dispararAPI() {
+            // Cole a sua URL completa do Voice Monkey entre as aspas abaixo
+            const urlVoiceMonkey = "https://webhooks.voicemonkey.io/catch/ac0855a0990f58226bd922e3e6aacdfb/66c64a8351";
+
+            // O mode: 'no-cors' evita que o navegador bloqueie a requisição por segurança
+            fetch(urlVoiceMonkey, { mode: 'no-cors' })
+                .then(() => {
+                    window.close();
+                })
+                .catch(error => {
+                    console.error('Erro ao disparar:', error);
+                    window.close();
+                });
+
+            // Redundância: tenta fechar a aba após 1,5 segundos se o navegador segurar a janela
+            setTimeout(() => {
+                window.close();
+            }, 1500); 
+        }
+    </script>
+</head>
+<body onload="dispararAPI()">
+    <p style="font-family: sans-serif; text-align: center; margin-top: 50px; color: #333;">
+        Ativando portão... Esta janela fechará automaticamente.
+    </p>
+</body>
+</html>
