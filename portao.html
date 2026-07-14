@@ -2,17 +2,78 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>Validando Acesso...</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Validação de Acesso</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            text-align: center;
+            background-color: #f4f4f9;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            max-width: 90%;
+            width: 380px;
+            box-sizing: border-box;
+        }
+        .status {
+            font-size: 1.4rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            transition: color 0.3s ease;
+        }
+        .detalhes {
+            font-size: 1rem;
+            color: #555;
+            line-height: 1.5;
+            min-height: 60px;
+        }
+        .btn-fechar {
+            display: none;
+            margin: 20px auto 0 auto;
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: bold;
+            color: white;
+            background-color: #333;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+            transition: background-color 0.2s;
+        }
+        .btn-fechar:active {
+            background-color: #555;
+        }
+        .timer {
+            margin-top: 25px;
+            font-size: 0.85rem;
+            color: #888;
+            border-top: 1px solid #eee;
+            padding-top: 15px;
+        }
+    </style>
     <script>
-        // --- 1. CONFIGURAÇÕES DE IDENTIFICAÇÃO ---
-        const PORTAO_LAT = -20.6656626;  
-        const PORTAO_LON = -43.7789289;  
+        // --- 1. CONFIGURAÇÕES DE DIRETÓRIO SECRETO (COORDENADAS DE CASA) ---
+        const configKey = "LTIwLjY2NTY2MjY=";    // Latitude (-20.6656626) em Base64
+        const configParam = "LTQzLjc3ODkyODk=";  // Longitude (-43.7789289) em Base64
+        
         const DISTANCIA_MAX_METROS = 40; // Raio de tolerância do GPS
 
-        // --- 2. CONFIGURAÇÃO DE DIRETÓRIO ---
+        // --- 2. CONFIGURAÇÃO DE ENDPOINT ---
         const configId = "aHR0cHM6Ly93ZWJob29rcy52b2ljZW1vbmtleS5pby9jYXRjaC9hYzA4NTVhMDk5MGY1ODIyNmJkOTIyZTNlNmFhY2RmYi82NmM2NGE4MzUx"; 
 
-        // Função matemática para calcular a distância física em metros (Fórmula de Haversine)
+        // Função para calcular a distância física em metros (Fórmula de Haversine)
         function calcularDistancia(lat1, lon1, lat2, lon2) {
             const R = 6371e3; // Raio da Terra em metros
             const φ1 = lat1 * Math.PI/180;
@@ -28,54 +89,106 @@
             return R * c; 
         }
 
+        // Exibe o status final na tela e inicia o cronômetro para fechar a aba
+        function atualizarPainel(titulo, descricao, corHex, segundosParaFechar) {
+            document.getElementById('status-title').innerText = titulo;
+            document.getElementById('status-title').style.color = corHex;
+            document.getElementById('status-details').innerText = descricao;
+            
+            // Mostra o botão físico de fechar
+            const btn = document.getElementById('btn-close');
+            btn.style.display = 'block';
+            btn.style.backgroundColor = corHex;
+
+            let tempoRestante = segundosParaFechar;
+            const timerElement = document.getElementById('timer');
+            timerElement.innerText = `Você pode fechar esta aba no botão acima.`;
+
+            // Mantém a tentativa de fechar em segundo plano
+            const contagemRegressiva = setInterval(() => {
+                tempoRestante--;
+                if (tempoRestante <= 0) {
+                    clearInterval(contagemRegressiva);
+                    window.close();
+                }
+            }, 1000);
+        }
+
         function validarEAbrir() {
             if (!navigator.geolocation) {
-                alert("Interface de sincronização não suportada.");
-                window.close();
+                atualizarPainel(
+                    "Sistema Incompatível", 
+                    "Este navegador de internet não possui suporte para serviços de localização.", 
+                    "#d9534f", 
+                    8
+                );
                 return;
             }
 
-            // Solicita a localização atual com alta precisão
+            // Solicita a localização com precisão máxima
             navigator.geolocation.getCurrentPosition(
                 (position) => {
                     const userLat = position.coords.latitude;
                     const userLon = position.coords.longitude;
 
-                    const distancia = calcularDistancia(userLat, userLon, PORTAO_LAT, PORTAO_LON);
+                    // Decodifica as coordenadas secretas em tempo de execução
+                    const targetLat = parseFloat(atob(configKey));
+                    const targetLon = parseFloat(atob(configParam));
+
+                    const distancia = calcularDistancia(userLat, userLon, targetLat, targetLon).toFixed(1);
 
                     if (distancia <= DISTANCIA_MAX_METROS) {
-                        // Se estiver perto, decodifica o endpoint e dispara em segundo plano
-                        const endpoint = atob(configId);
+                        // Se estiver perto, dispara a API
+                        atualizarPainel(
+                            "Acesso Liberado!", 
+                            `Você está a ${distancia} metros do portão. Ativando comando de abertura...`, 
+                            "#2b9348", 
+                            4
+                        );
 
+                        const endpoint = atob(configId);
                         fetch(endpoint, { mode: 'no-cors' })
-                            .then(() => {
-                                window.close(); // Fecha a página se a requisição deu certo
-                            })
-                            .catch(() => {
-                                window.close(); // Fecha mesmo se houver algum erro de rede local
-                            });
+                            .catch(error => console.error('Erro de requisição:', error));
                     } else {
-                        alert("Acesso negado: Dispositivo fora da área de cobertura local.");
-                        window.close();
+                        // Se estiver longe, bloqueia e exibe a distância calculada
+                        atualizarPainel(
+                            "Acesso Negado", 
+                            `Você está fora da área permitida.\nSua distância atual: ${distancia}m.\nLimite máximo: ${DISTANCIA_MAX_METROS}m.`, 
+                            "#d9534f", 
+                            10
+                        );
                     }
                 },
                 (error) => {
-                    alert("Erro ao validar credenciais físicas. Garanta que o serviço de localização esteja ativo no aparelho.");
-                    window.close();
-                },
-                { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
-            );
+                    let motivo = "Não foi possível obter sua localização.";
+                    if (error.code === error.PERMISSION_DENIED) {
+                        motivo = "A permissão de localização foi negada por você ou pelo sistema operacional.";
+                    } else if (error.code === error.POSITION_UNAVAILABLE) {
+                        motivo = "O GPS do seu celular não conseguiu obter um sinal válido no momento.";
+                    } else if (error.code === error.TIMEOUT) {
+                        motivo = "O tempo limite para obter a localização do GPS expirou.";
+                    }
 
-            // Redundância: Garante o fechamento da aba após 7 segundos caso o navegador trave a tela
-            setTimeout(() => {
-                window.close();
-            }, 7000);
+                    atualizarPainel(
+                        "Falha de GPS", 
+                        `${motivo} Garanta que o serviço de localização esteja ativo no seu aparelho.`, 
+                        "#e07a5f", 
+                        10
+                    );
+                },
+                { enableHighAccuracy: true, timeout: 6000, maximumAge: 0 }
+            );
         }
     </script>
 </head>
 <body onload="validarEAbrir()">
-    <p style="font-family: sans-serif; text-align: center; margin-top: 50px; color: #333;">
-        Verificando proximidade física... por favor, aguarde.
-    </p>
+    <div class="card">
+        <div id="status-title" class="status" style="color: #0275d8;">Verificando...</div>
+        <div id="status-details" class="detalhes">Solicitando suas coordenadas físicas ao sensor de GPS...</div>
+        
+        <button id="btn-close" class="btn-fechar" onclick="window.close()">Fechar Aba</button>
+        
+        <div id="timer" class="timer">Iniciando protocolo de segurança...</div>
+    </div>
 </body>
 </html>
