@@ -2,32 +2,80 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>Abrindo portão...</title>
+    <title>Validando Acesso...</title>
     <script>
-        function dispararAPI() {
-            // Cole a sua URL completa do Voice Monkey entre as aspas abaixo
-            const urlVoiceMonkey = "https://webhooks.voicemonkey.io/catch/ac0855a0990f58226bd922e3e6aacdfb/66c64a8351";
+        // --- 1. CONFIGURAÇÕES DE IDENTIFICAÇÃO ---
+        const PORTAO_LAT = -20.6656626;  
+        const PORTAO_LON = -43.7789289;  
+        const DISTANCIA_MAX_METROS = 40; // Raio de tolerância do GPS
 
-            // O mode: 'no-cors' evita que o navegador bloqueie a requisição por segurança
-            fetch(urlVoiceMonkey, { mode: 'no-cors' })
-                .then(() => {
-                    window.close();
-                })
-                .catch(error => {
-                    console.error('Erro ao disparar:', error);
-                    window.close();
-                });
+        // --- 2. CONFIGURAÇÃO DE DIRETÓRIO ---
+        const configId = "aHR0cHM6Ly93ZWJob29rcy52b2ljZW1vbmtleS5pby9jYXRjaC9hYzA4NTVhMDk5MGY1ODIyNmJkOTIyZTNlNmFhY2RmYi82NmM2NGE4MzUx"; 
 
-            // Redundância: tenta fechar a aba após 1,5 segundos se o navegador segurar a janela
+        // Função matemática para calcular a distância física em metros (Fórmula de Haversine)
+        function calcularDistancia(lat1, lon1, lat2, lon2) {
+            const R = 6371e3; // Raio da Terra em metros
+            const φ1 = lat1 * Math.PI/180;
+            const φ2 = lat2 * Math.PI/180;
+            const Δφ = (lat2-lat1) * Math.PI/180;
+            const Δλ = (lon2-lon1) * Math.PI/180;
+
+            const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+                      Math.cos(φ1) * Math.cos(φ2) *
+                      Math.sin(Δλ/2) * Math.sin(Δλ/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+            return R * c; 
+        }
+
+        function validarEAbrir() {
+            if (!navigator.geolocation) {
+                alert("Interface de sincronização não suportada.");
+                window.close();
+                return;
+            }
+
+            // Solicita a localização atual com alta precisão
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const userLat = position.coords.latitude;
+                    const userLon = position.coords.longitude;
+
+                    const distancia = calcularDistancia(userLat, userLon, PORTAO_LAT, PORTAO_LON);
+
+                    if (distancia <= DISTANCIA_MAX_METROS) {
+                        // Se estiver perto, decodifica o endpoint e dispara em segundo plano
+                        const endpoint = atob(configId);
+
+                        fetch(endpoint, { mode: 'no-cors' })
+                            .then(() => {
+                                window.close(); // Fecha a página se a requisição deu certo
+                            })
+                            .catch(() => {
+                                window.close(); // Fecha mesmo se houver algum erro de rede local
+                            });
+                    } else {
+                        alert("Acesso negado: Dispositivo fora da área de cobertura local.");
+                        window.close();
+                    }
+                },
+                (error) => {
+                    alert("Erro ao validar credenciais físicas. Garanta que o serviço de localização esteja ativo no aparelho.");
+                    window.close();
+                },
+                { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+            );
+
+            // Redundância: Garante o fechamento da aba após 7 segundos caso o navegador trave a tela
             setTimeout(() => {
                 window.close();
-            }, 1500); 
+            }, 7000);
         }
     </script>
 </head>
-<body onload="dispararAPI()">
+<body onload="validarEAbrir()">
     <p style="font-family: sans-serif; text-align: center; margin-top: 50px; color: #333;">
-        Ativando portão... Esta janela fechará automaticamente.
+        Verificando proximidade física... por favor, aguarde.
     </p>
 </body>
 </html>
