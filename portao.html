@@ -102,10 +102,12 @@
 
             const timerElement = document.getElementById('timer');
 
-            // Se for sucesso (sem delay)
+            // Se for sucesso (delay mínimo de segurança de 0.8s)
             if (segundosParaFechar === 0) {
-                timerElement.innerText = "Fechando aba...";
-                window.close();
+                timerElement.innerText = "Finalizando conexão...";
+                setTimeout(() => {
+                    window.close();
+                }, 800); 
                 return;
             }
 
@@ -153,7 +155,7 @@
                         const urlParams = new URLSearchParams(window.location.search);
                         const usuario = urlParams.get('user') || 'desconhecido';
 
-                        // Atualiza o painel para fechar na hora (0 segundos de delay)
+                        // Atualiza o painel para fechar após o delay mínimo de sucesso
                         atualizarPainel(
                             "Acesso Liberado!", 
                             `Olá, ${usuario}! Comando enviado.`, 
@@ -169,9 +171,10 @@
                             endpoint += `?p1=${encodeURIComponent(usuario)}`;
                         }
 
+                        // Dispara a requisição e tenta fechar imediatamente após a resposta (ou erro)
                         fetch(endpoint, { mode: 'no-cors' })
-                            .then(() => { window.close(); })
-                            .catch(() => { window.close(); });
+                            .then(() => { setTimeout(() => { window.close(); }, 800); })
+                            .catch(() => { setTimeout(() => { window.close(); }, 800); });
                     } else {
                         // Se estiver longe, bloqueia e exibe contagem de 3s
                         atualizarPainel(
