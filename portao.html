@@ -64,11 +64,11 @@
         }
     </style>
     <script>
-        // --- 1. CONFIGURAÇÕES DE DIRETÓRIO SECRETO (COORDENADAS DE CASA) ---
-        const configKey = "LTIwLjY2NTY2MjY=";    // Latitude (-20.6656626) em Base64
-        const configParam = "LTQzLjc3ODkyODk=";  // Longitude (-43.7789289) em Base64
         
-        const DISTANCIA_MAX_METROS = 40; // Raio de tolerância do GPS
+        const configKey = "LTIwLjY2NTY2MjY=";
+        const configParam = "LTQzLjc3ODkyODk=";
+        
+        const DISTANCIA_MAX_METROS = 40;
 
         // --- 2. CONFIGURAÇÃO DE ENDPOINT ---
         const configId = "aHR0cHM6Ly93ZWJob29rcy52b2ljZW1vbmtleS5pby9jYXRjaC9hYzA4NTVhMDk5MGY1ODIyNmJkOTIyZTNlNmFhY2RmYi82NmM2NGE4MzUx"; 
@@ -107,7 +107,7 @@
                 timerElement.innerText = "Finalizando conexão...";
                 setTimeout(() => {
                     window.close();
-                }, 800); 
+                }, 2000); 
                 return;
             }
 
@@ -158,7 +158,7 @@
                         // Atualiza o painel para fechar após o delay mínimo de sucesso
                         atualizarPainel(
                             "Acesso Liberado!", 
-                            `Olá, ${usuario}! Comando enviado.`, 
+                            `Olá! Comando enviado.`, 
                             "#2b9348", 
                             0
                         );
