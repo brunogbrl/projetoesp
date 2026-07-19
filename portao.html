@@ -1,220 +1,142 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Validação de Acesso</title>
-    <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            text-align: center;
-            background-color: #f4f4f9;
-            color: #333;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-        }
-        .card {
-            background: white;
-            padding: 30px;
-            border-radius: 16px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-            max-width: 90%;
-            width: 380px;
-            box-sizing: border-box;
-        }
-        .status {
-            font-size: 1.4rem;
-            font-weight: bold;
-            margin-bottom: 15px;
-            transition: color 0.3s ease;
-        }
-        .detalhes {
-            font-size: 1rem;
-            color: #555;
-            line-height: 1.5;
-            min-height: 60px;
-        }
-        .btn-fechar {
-            display: none;
-            margin: 20px auto 0 auto;
-            padding: 12px 24px;
-            font-size: 1rem;
-            font-weight: bold;
-            color: white;
-            background-color: #333;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.15);
-            transition: background-color 0.2s;
-        }
-        .btn-fechar:active {
-            background-color: #555;
-        }
-        .timer {
-            margin-top: 25px;
-            font-size: 0.85rem;
-            color: #888;
-            border-top: 1px solid #eee;
-            padding-top: 15px;
-        }
-    </style>
-    <script>
-        
-        const configKey = "LTIwLjY2NTY2MjY=";
-        const configParam = "LTQzLjc3ODkyODk=";
-        
-        const DISTANCIA_MAX_METROS = 40;
-
-        // --- 2. CONFIGURAÇÃO DE ENDPOINT ---
-        const configId = "aHR0cHM6Ly93ZWJob29rcy52b2ljZW1vbmtleS5pby9jYXRjaC9hYzA4NTVhMDk5MGY1ODIyNmJkOTIyZTNlNmFhY2RmYi82NmM2NGE4MzUx"; 
-
-        // Função para calcular a distância física em metros (Fórmula de Haversine)
-        function calcularDistancia(lat1, lon1, lat2, lon2) {
-            const R = 6371e3; // Raio da Terra em metros
-            const φ1 = lat1 * Math.PI/180;
-            const φ2 = lat2 * Math.PI/180;
-            const Δφ = (lat2-lat1) * Math.PI/180;
-            const Δλ = (lon2-lon1) * Math.PI/180;
-
-            const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
-                      Math.cos(φ1) * Math.cos(φ2) *
-                      Math.sin(Δλ/2) * Math.sin(Δλ/2);
-            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-
-            return R * c; 
-        }
-
-        // Exibe o status final na tela e gerencia o fechamento
-        function atualizarPainel(titulo, descricao, corHex, segundosParaFechar) {
-            document.getElementById('status-title').innerText = titulo;
-            document.getElementById('status-title').style.color = corHex;
-            document.getElementById('status-details').innerText = descricao;
-            
-            // Mostra o botão físico de fechar (caso o window.close() automático seja bloqueado)
-            const btn = document.getElementById('btn-close');
-            btn.style.display = 'block';
-            btn.style.backgroundColor = corHex;
-
-            const timerElement = document.getElementById('timer');
-
-            // Se for sucesso (delay mínimo de segurança de 0.8s)
-            if (segundosParaFechar === 0) {
-                timerElement.innerText = "Finalizando conexão...";
-                setTimeout(() => {
-                    window.close();
-                }, 2000); 
-                return;
-            }
-
-            // Se for negado/erro (com contagem regressiva de 3s)
-            let tempoRestante = segundosParaFechar;
-            timerElement.innerText = `Fechando aba em ${tempoRestante}s...`;
-
-            const contagemRegressiva = setInterval(() => {
-                tempoRestante--;
-                if (tempoRestante <= 0) {
-                    clearInterval(contagemRegressiva);
-                    timerElement.innerText = "Você pode fechar esta aba no botão acima.";
-                    window.close();
-                } else {
-                    timerElement.innerText = `Fechando aba em ${tempoRestante}s...`;
-                }
-            }, 1000);
-        }
-
-        function validarEAbrir() {
-            if (!navigator.geolocation) {
-                atualizarPainel(
-                    "Sistema Incompatível", 
-                    "Este navegador de internet não possui suporte para serviços de localização.", 
-                    "#d9534f", 
-                    3
-                );
-                return;
-            }
-
-            // Solicita a localização com precisão máxima
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    const userLat = position.coords.latitude;
-                    const userLon = position.coords.longitude;
-
-                    // Decodifica as coordenadas secretas em tempo de execução
-                    const targetLat = parseFloat(atob(configKey));
-                    const targetLon = parseFloat(atob(configParam));
-
-                    const distancia = calcularDistancia(userLat, userLon, targetLat, targetLon).toFixed(1);
-
-                    if (distancia <= DISTANCIA_MAX_METROS) {
-                        // 1. Identifica quem está abrindo a partir dos parâmetros da URL
-                        const urlParams = new URLSearchParams(window.location.search);
-                        const usuario = urlParams.get('user') || 'desconhecido';
-
-                        // Atualiza o painel para fechar após o delay mínimo de sucesso
-                        atualizarPainel(
-                            "Acesso Liberado!", 
-                            `Olá! Comando enviado.`, 
-                            "#2b9348", 
-                            0
-                        );
-
-                        // 2. Monta o endpoint e dispara
-                        let endpoint = atob(configId);
-                        if (endpoint.includes('?')) {
-                            endpoint += `&p1=${encodeURIComponent(usuario)}`;
-                        } else {
-                            endpoint += `?p1=${encodeURIComponent(usuario)}`;
-                        }
-
-                        // Dispara a requisição e tenta fechar imediatamente após a resposta (ou erro)
-                        fetch(endpoint, { mode: 'no-cors' })
-                            .then(() => { setTimeout(() => { window.close(); }, 800); })
-                            .catch(() => { setTimeout(() => { window.close(); }, 800); });
-                    } else {
-                        // Se estiver longe, bloqueia e exibe contagem de 3s
-                        atualizarPainel(
-                            "Acesso Negado", 
-                            `Distância atual: ${distancia}m. Limite: ${DISTANCIA_MAX_METROS}m.`, 
-                            "#d9534f", 
-                            3
-                        );
-                    }
-                },
-                (error) => {
-                    let motivo = "Não foi possível obter sua localização.";
-                    if (error.code === error.PERMISSION_DENIED) {
-                        motivo = "A permissão de localização foi negada.";
-                    } else if (error.code === error.POSITION_UNAVAILABLE) {
-                        motivo = "Sinal de GPS indisponível.";
-                    } else if (error.code === error.TIMEOUT) {
-                        motivo = "Tempo limite do GPS excedido.";
-                    }
-
-                    atualizarPainel(
-                        "Falha de GPS", 
-                        motivo, 
-                        "#e07a5f", 
-                        3
-                    );
-                },
-                { enableHighAccuracy: true, timeout: 6000, maximumAge: 0 }
-            );
-        }
-    </script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MEDU$A_5G Portal</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+      background-color: #0d0d0d;
+      background-image: radial-gradient(circle, rgba(3, 61, 252, 0.12) 0%, rgba(13, 13, 13, 1) 70%);
+      background-attachment: fixed;
+      color: #ffffff;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .container {
+      background: rgba(26, 26, 26, 0.45);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 20px;
+      padding: 30px 24px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+      text-align: center;
+    }
+    h1 { font-size: 24px; font-weight: 800; letter-spacing: 2px; color: #ffffff; margin-bottom: 5px; }
+    .badge {
+      display: inline-block;
+      background-color: rgba(3, 61, 252, 0.15);
+      border: 1px solid rgba(3, 61, 252, 0.4);
+      color: #033dfc;
+      font-size: 11px;
+      font-weight: bold;
+      padding: 4px 12px;
+      border-radius: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 25px;
+      box-shadow: 0 0 10px rgba(3, 61, 252, 0.25);
+    }
+    .info-box {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      padding: 15px;
+      margin-bottom: 25px;
+      text-align: left;
+    }
+    .info-title { font-size: 13px; color: #888; margin-bottom: 8px; display: flex; justify-content: space-between; }
+    .info-value { font-size: 15px; font-weight: 600; margin-bottom: 12px; }
+    .wifi-name { color: #033dfc; transition: color 0.3s ease; }
+    .signal-bar-container { background: rgba(255, 255, 255, 0.08); height: 8px; border-radius: 4px; overflow: hidden; width: 100%; }
+    .signal-bar-fill {
+      height: 100%; width: 0%; background: linear-gradient(90deg, #3b66ff, #033dfc);
+      border-radius: 4px; transition: width 0.5s ease-in-out; box-shadow: 0 0 8px rgba(3, 61, 252, 0.6);
+    }
+    .btn-group { display: flex; flex-direction: column; gap: 16px; }
+    .btn { width: 100%; border: none; border-radius: 12px; padding: 16px; font-size: 15px; font-weight: bold; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); color: #ffffff; outline: none; }
+    .btn-portao { background-color: #033dfc; box-shadow: 0 4px 20px rgba(3, 61, 252, 0.35); }
+    .btn-portao:hover { background-color: #2456ff; box-shadow: 0 4px 25px rgba(3, 61, 252, 0.6); transform: translateY(-2px); }
+    .btn-portao:active { transform: translateY(1px) scale(0.98); }
+    .btn-led-off { background-color: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.12); color: #aaa; }
+    .btn-led-off:hover { background-color: rgba(255, 255, 255, 0.12); color: #fff; transform: translateY(-1px); }
+    .btn-led-on { background-color: #2ec4b6; box-shadow: 0 4px 15px rgba(46, 196, 182, 0.4); }
+    .btn-led-on:hover { background-color: #3fdfcf; transform: translateY(-1px); }
+    .btn-led:active { transform: scale(0.97); }
+    .footer { margin-top: 25px; font-size: 11px; color: #555; letter-spacing: 1px; }
+  </style>
 </head>
-<body onload="validarEAbrir()">
-    <div class="card">
-        <div id="status-title" class="status" style="color: #0275d8;">Verificando...</div>
-        <div id="status-details" class="detalhes">Solicitando coordenadas ao GPS...</div>
-        
-        <button id="btn-close" class="btn-fechar" onclick="window.close()">Fechar Aba</button>
-        
-        <div id="timer" class="timer">Iniciando protocolo de segurança...</div>
+<body>
+  <div class="container">
+    <h1>MEDU$A_5G</h1>
+    <div class="badge">Painel de Controle</div>
+    <div class="info-box">
+      <div class="info-title"><span>Rede Conectada:</span><span id="txt-wifi-status" style="transition: color 0.3s ease;">Conectando...</span></div>
+      <div class="info-value"><span class="wifi-name" id="txt-wifi-ssid">SOLAR_5G</span></div>
+      <div class="info-title"><span>Qualidade do Sinal:</span><span id="txt-sinal-porcentagem">0%</span></div>
+      <div class="signal-bar-container"><div class="signal-bar-fill" id="sinal-progresso"></div></div>
     </div>
+    <div class="btn-group">
+      <button class="btn btn-portao" onclick="acionarPortao()">Abrir</button>
+      <button id="btn-led" class="btn btn-led-off" onclick="alternarLed()">Teste de Sinal (LED)</button>
+    </div>
+    <div class="footer">SISTEMA ATIVO</div>
+  </div>
+  <script>
+    function atualizarStatus() {
+      fetch('/status')
+        .then(response => response.json())
+        .then(data => {
+          const txtStatus = document.getElementById('txt-wifi-status');
+          const txtSsid = document.getElementById('txt-wifi-ssid');
+          if (data.wifi_conectado) {
+            txtStatus.textContent = "ONLINE (IP: " + data.wifi_ip + ")";
+            txtStatus.style.color = "#2ec4b6";
+            txtSsid.textContent = data.wifi_ssid;
+          } else {
+            txtStatus.textContent = "DESCONECTADO";
+            txtStatus.style.color = "#033dfc";
+            txtSsid.textContent = "Procurando " + data.wifi_ssid + "...";
+          }
+          const progresso = document.getElementById('sinal-progresso');
+          const pctTexto = document.getElementById('txt-sinal-porcentagem');
+          progresso.style.width = data.sinal_qualidade + "%";
+          pctTexto.textContent = data.sinal_qualidade + "% (" + data.sinal_dbm + " dBm)";
+          const btnLed = document.getElementById('btn-led');
+          if (data.led_ativo) {
+            btnLed.className = "btn btn-led btn-led-on";
+            btnLed.textContent = "LED: ATIVO";
+          } else {
+            btnLed.className = "btn btn-led btn-led-off";
+            btnLed.textContent = "LED: INATIVO";
+          }
+        })
+        .catch(err => console.error("Erro na atualização:", err));
+    }
+    function acionarPortao() {
+      fetch('/portao')
+        .then(response => response.text())
+        .catch(err => console.error("Erro ao acionar portão:", err));
+    }
+    function alternarLed() {
+      fetch('/alternar_led')
+        .then(response => response.text())
+        .then(() => { atualizarStatus(); })
+        .catch(err => console.error("Erro ao alternar LED:", err));
+    }
+    window.onload = function() {
+      atualizarStatus();
+      setInterval(atualizarStatus, 2500);
+    }
+  </script>
 </body>
 </html>
