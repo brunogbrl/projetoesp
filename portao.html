@@ -1,122 +1,16 @@
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Portal Portão</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
-      background-color: #0d0d0d;
-      background-image: radial-gradient(circle, rgba(3, 61, 252, 0.12) 0%, rgba(13, 13, 13, 1) 70%);
-      background-attachment: fixed;
-      color: #ffffff;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
-    .container {
-      background: rgba(26, 26, 26, 0.45);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 20px;
-      padding: 40px 24px;
-      width: 100%;
-      max-width: 400px;
-      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
-      text-align: center;
-    }
-    h1 { font-size: 26px; font-weight: 800; letter-spacing: 2px; color: #ffffff; margin-bottom: 30px; }
-    
-    /* Área do Ícone do Cadeado */
-    .lock-container {
-      margin-bottom: 35px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-    .lock-svg {
-      width: 80px;
-      height: 80px;
-      fill: none;
-      stroke: #033dfc;
-      stroke-width: 2;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-      transition: all 0.4s ease;
-      filter: drop-shadow(0 0 8px rgba(3, 61, 252, 0.4));
-      overflow: visible; /* Impede o corte da animação no iOS */
-    }
-    /* Haste do cadeado */
-    .lock-shackle {
-      transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    /* Estado Aberto Animado */
-    .lock-container.open .lock-svg {
-      stroke: #2ec4b6;
-      filter: drop-shadow(0 0 12px rgba(46, 196, 182, 0.6));
-    }
-    /* Movimento para cima e para o lado eliminando o bug visual */
-    .lock-container.open .lock-shackle {
-      transform: translateY(-5px) translateX(4px);
-    }
-
-    .btn-group { display: flex; flex-direction: column; gap: 16px; }
-    .btn { width: 100%; border: none; border-radius: 12px; padding: 16px; font-size: 16px; font-weight: bold; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); color: #ffffff; outline: none; }
-    .btn-portao { background-color: #033dfc; box-shadow: 0 4px 20px rgba(3, 61, 252, 0.35); }
-    .btn-portao:hover { background-color: #2456ff; box-shadow: 0 4px 25px rgba(3, 61, 252, 0.6); transform: translateY(-2px); }
-    .btn-portao:active { transform: translateY(1px) scale(0.98); }
-    .footer { margin-top: 35px; font-size: 11px; color: #555; letter-spacing: 1px; }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#08101f">
+<title>Acesso Portão</title>
+<style>
+:root{--bg:#07101f;--line:#233652;--text:#f5f8ff;--muted:#91a2c1;--cyan:#36e0c0;--danger:#ff8298}*{box-sizing:border-box}body{min-height:100vh;margin:0;display:grid;place-items:center;padding:18px;color:var(--text);font-family:Inter,system-ui,sans-serif;background:radial-gradient(circle at 50% -15%,#213968 0,#0c1930 38%,var(--bg) 78%)}.shell{width:min(100%,450px);padding:clamp(22px,6vw,34px) clamp(17px,6vw,28px) 24px;border:1px solid var(--line);border-radius:30px;text-align:center;background:linear-gradient(145deg,#142440e8,#0b1528ed);box-shadow:0 24px 80px #0009}.eyebrow{color:var(--cyan);font-size:11px;font-weight:800;letter-spacing:.18em;text-transform:uppercase}h1{margin:13px 0 7px;font-size:clamp(27px,8vw,39px);letter-spacing:-.045em}.intro{margin:0 0 26px;color:var(--muted);font-size:14px}.scene{position:relative;height:175px;margin-bottom:22px;overflow:hidden;border:1px solid #263a5b;border-radius:22px;background:linear-gradient(#0a1427,#0b1323)}.moon{position:absolute;top:20px;right:30px;width:13px;height:13px;border-radius:50%;background:#fff4c2;box-shadow:0 0 20px #fff4c288}.ground{position:absolute;right:10%;bottom:18px;left:10%;height:8px;border-radius:8px;background:#2a3c60;box-shadow:0 12px #182641}.gate{position:absolute;z-index:1;bottom:26px;left:50%;width:min(72%,230px);height:104px;padding:10px;display:grid;grid-template-columns:repeat(4,1fr);gap:6px;border:3px solid #7184b0;border-bottom:0;border-radius:11px 11px 0 0;background:linear-gradient(135deg,#334b78,#192945);transform:translateX(-50%);transform-origin:left bottom;transition:transform .9s,opacity .9s}.gate span{border:1px solid #61749e;border-radius:3px;background:#172643}.scene.open .gate{transform:translateX(-50%) perspective(500px) rotateY(-78deg);opacity:.35}.signal{position:absolute;z-index:2;top:51%;left:50%;width:74px;height:74px;padding:12px;border-radius:50%;color:var(--cyan);background:#182949e8;box-shadow:0 0 0 8px #18294955;transform:translate(-50%,-50%)}.signal svg{width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.wave{opacity:.24}.dot{fill:currentColor;stroke:none;opacity:.85}.scene.open .wave{animation:send .9s ease-in-out infinite}.scene.open .wave:nth-child(1){animation-delay:.3s}.scene.open .wave:nth-child(2){animation-delay:.15s}.scene.open .wave:nth-child(3){animation-delay:0s}@keyframes send{0%,100%{opacity:.2}45%{opacity:1;filter:drop-shadow(0 0 5px var(--cyan))}}.action{width:100%;min-height:62px;border:0;border-radius:17px;cursor:pointer;color:white;font:800 16px inherit;letter-spacing:.04em;background:linear-gradient(135deg,#8179ff,#564de8);box-shadow:0 12px 28px #5c54ec55;transition:transform .15s,filter .15s}.action:hover{filter:brightness(1.1);transform:translateY(-2px)}.action:active{transform:translateY(1px)}.action:disabled{cursor:wait;opacity:.65;transform:none}.state{min-height:22px;margin:16px 0 18px;color:var(--muted);font-size:13px}.state.ok{color:var(--cyan)}.state.error{color:var(--danger)}.connection{padding:15px;border:1px solid var(--line);border-radius:17px;text-align:left;background:#0b1629;font-size:12px}.connection-title{margin-bottom:13px;color:var(--text);font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase}.row{display:flex;justify-content:space-between;gap:12px;margin:9px 0}.label{color:var(--muted)}.value{color:var(--cyan);font-weight:700;text-align:right}.footer{margin-top:22px;color:#657694;font-size:11px}@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+</style>
 </head>
 <body>
-  <div class="container">
-    <h1>Portão</h1>
-    
-    <!-- Ícone de Cadeado Animado SVG -->
-    <div class="lock-container" id="lock-wrapper">
-      <svg class="lock-svg" viewBox="0 0 24 24">
-        <path class="lock-shackle" d="M7 11V7a5 5 0 0 1 10 0v4" />
-        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-        <path d="M12 15v3" />
-      </svg>
-    </div>
-
-    <div class="btn-group">
-      <button class="btn btn-portao" onclick="acionarPortao()">Abrir</button>
-    </div>
-    <div class="footer">SISTEMA ATIVO</div>
-  </div>
-
-  <script>
-    let liberado = false;
-
-    // Cole a URL completa da API do seu Voice Monkey entre as aspas abaixo:
-    const URL_API_VOICE_MONKEY = "https://webhooks.voicemonkey.io/catch/ac0855a0990f58226bd922e3e6aacdfb/66c64a8351";
-
-    function acionarPortao() {
-      if (liberado) return; 
-      
-      liberado = true;
-      const lockWrapper = document.getElementById('lock-wrapper');
-      
-      lockWrapper.classList.add('open');
-
-      // Executa a chamada usando a URL externa configurada acima
-      fetch(URL_API_VOICE_MONKEY)
-        .then(response => response.text())
-        .catch(err => console.error("Erro ao acionar portão:", err));
-
-      setTimeout(() => {
-        lockWrapper.classList.remove('open');
-        liberado = false;
-      }, 5000);
-    }
-  </script>
+<main class="shell"><div class="eyebrow">Controle local</div><h1>Acesso Portão</h1><p class="intro">Acione o portão com segurança e praticidade</p><section class="scene" id="scene" aria-label="Animação do portão"><div class="moon"></div><div class="ground"></div><div class="gate"><span></span><span></span><span></span><span></span></div><div class="signal" aria-hidden="true"><svg viewBox="0 0 48 48"><path class="wave" d="M5 18.5a28 28 0 0 1 38 0"/><path class="wave" d="M11 25a19.5 19.5 0 0 1 26 0"/><path class="wave" d="M17.5 31.5a10.5 10.5 0 0 1 13 0"/><circle class="dot" cx="24" cy="38" r="2.8"/></svg></div></section><button class="action" id="action" type="button">ABRIR PORTÃO</button><div class="state" id="state">Sistema pronto</div><section class="connection"><div class="connection-title">Conexão do dispositivo</div><div class="row"><span class="label">Status</span><span class="value">ONLINE</span></div><div class="row"><span class="label">Endereço</span><span class="value">portao.local</span></div><div class="row"><span class="label">IP</span><span class="value">192.168.1.50</span></div></section><div class="footer">Dispositivo protegido na rede local</div></main>
+<script>const URL_ACIONAMENTO='http://192.168.1.50/api/open';const action=document.querySelector('#action'),scene=document.querySelector('#scene'),state=document.querySelector('#state');action.addEventListener('click',async()=>{action.disabled=true;scene.classList.add('open');state.className='state';state.textContent='Acionando o portão...';try{const response=await fetch(URL_ACIONAMENTO,{method:'POST',cache:'no-store'});if(!response.ok)throw new Error();state.className='state ok';state.textContent='Comando enviado com sucesso'}catch(error){state.className='state error';state.textContent='Não foi possível acionar o portão'}finally{setTimeout(()=>{action.disabled=false;scene.classList.remove('open')},1600)}});</script>
 </body>
 </html>
