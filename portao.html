@@ -10,10 +10,14 @@
 </style>
 </head>
 <body>
-<main class="shell"><div class="eyebrow">Controle local</div><h1>Acesso Portão</h1><p class="intro">Acione o portão com segurança e praticidade</p><section class="scene" id="scene" aria-label="Animação do portão"><div class="moon"></div><div class="ground"></div><div class="gate"><span></span><span></span><span></span><span></span></div><div class="signal" aria-hidden="true"><svg viewBox="0 0 48 48"><path class="wave" d="M5 18.5a28 28 0 0 1 38 0"/><path class="wave" d="M11 25a19.5 19.5 0 0 1 26 0"/><path class="wave" d="M17.5 31.5a10.5 10.5 0 0 1 13 0"/><circle class="dot" cx="24" cy="38" r="2.8"/></svg></div></section><button class="action" id="action" type="button">ABRIR PORTÃO</button><div class="state" id="state">Sistema pronto</div><div class="footer">Dispositivo protegido na rede local</div></main>
+<main class="shell"><div class="eyebrow">Controle local</div><h1>Acesso Portão</h1><p class="intro">Acione o portão com segurança e praticidade</p><section class="scene" id="scene" aria-label="Animação do portão"><div class="moon"></div><div class="ground"></div><div class="gate"><span></span><span></span><span></span><span></span></div><div class="signal" aria-hidden="true"><svg viewBox="0 0 48 48"><path class="wave" d="M5 18.5a28 28 0 0 1 38 0"/><path class="wave" d="M11 25a19.5 19.5 0 0 1 26 0"/><path class="wave" d="M17.5 31.5a10.5 10.5 0 0 1 13 0"/><circle class="dot" cx="24" cy="38" r="2.8"/></svg></div></section><button class="action" id="action" type="button">ABRIR PORTÃO</button><div class="state" id="state">Sistema pronto</div></main>
 <script>const URL_ACIONAMENTO='http://192.168.1.50/api/open';const action=document.querySelector('#action'),scene=document.querySelector('#scene'),state=document.querySelector('#state');action.addEventListener('click',async()=>{action.disabled=true;scene.classList.add('open');state.className='state';state.textContent='Acionando o portão...';try{const response=await fetch(URL_ACIONAMENTO,{method:'POST',cache:'no-store'});if(!response.ok)throw new Error();state.className='state ok';state.textContent='Comando enviado com sucesso'}catch(error){state.className='state error';state.textContent='Não foi possível acionar o portão'}finally{setTimeout(()=>{action.disabled=false;scene.classList.remove('open')},1600)}});</script>
 </body>
 </html>
+
+
+
+
 
 
 
